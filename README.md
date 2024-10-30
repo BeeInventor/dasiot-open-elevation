@@ -21,3 +21,32 @@ Please consider donating to keep the public API alive. This API is **used by mil
 You can donate [by following this link](https://www.open-elevation.com/#donate).
 
 
+## DasIot Started
+
+
+### Download Taiwan data from 
+
+```
+- https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_08.zip
+- https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_07.zip
+```
+
+### Create folder
+
+```
+mkdir -p data
+```
+
+### Copy srtm_61_08.tif, srtm_61_08.tif to data folder
+
+### Start server
+
+```
+docker run -t -i -v $(pwd)/data:/code/data -p 80:8080 openelevation/open-elevation
+```
+
+### Evaluate result
+
+```
+curl --location 'http://localhost:80/api/v1/lookup?locations=25.078984%2C121.529100'
+```

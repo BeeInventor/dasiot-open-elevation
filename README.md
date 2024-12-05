@@ -50,3 +50,12 @@ docker run -t -i -v $(pwd)/data:/code/data -p 80:8080 openelevation/open-elevati
 ```
 curl --location 'http://localhost:80/api/v1/lookup?locations=25.078984%2C121.529100'
 ```
+
+
+```
+
+helm install open-elevation ./charts/open-elevation \
+  --namespace open-elevation \
+  --create-namespace \
+  --set persistence.size=5Gi
+```

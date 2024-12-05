@@ -25,4 +25,10 @@ persistence:
   accessMode: ReadWriteOnce
   size: 1Gi
 
+tolerations:
+- key: "layer"
+  operator: "Equal"
+  value: "infra"
+  effect: "NoSchedule"
+
 env: {}

@@ -48,12 +48,13 @@ docker run -t -i -v $(pwd)/data:/code/data -p 80:8080 openelevation/open-elevati
 ### Evaluate result
 
 ```
-curl --location 'http://localhost:80/api/v1/lookup?locations=25.078984%2C121.529100'
+curl --location 'https://api.open-elevation.com/api/v1/lookup?locations=25.078984%2C121.529100'
 ```
 
 
-```
+## Host with Helm
 
+```
 helm install open-elevation ./charts/open-elevation \
   --namespace open-elevation \
   --create-namespace \

@@ -1,41 +1,65 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "open-elevation.fullname" . }}
-  labels:
-    {{- include "open-elevation.labels" . | nindent 4 }}
+ name: {{ include "open-elevation.fullname" . }}
+ labels:
+   {{- include "open-elevation.labels" . | nindent 4 }}
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      {{- include "open-elevation.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      labels:
-        {{- include "open-elevation.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-          volumeMounts:
-            - name: data
-              mountPath: /code/data
-          {{- if .Values.env }}
-          env:
-            {{- range $key, $value := .Values.env }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
-            {{- end }}
-          {{- end }}
-      volumes:
-        - name: data
-          {{- if .Values.persistence.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "open-elevation.fullname" . }}{{- end }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
+ replicas: 1
+ selector:
+   matchLabels:
+     {{- include "open-elevation.selectorLabels" . | nindent 6 }}
+ template:
+   metadata:
+     labels:
+       {{- include "open-elevation.selectorLabels" . | nindent 8 }}
+   spec:
+     initContainers:
+       - name: download-srtm
+         image: debian:buster-slim
+         command:
+           - sh
+           - -c
+           - |
+             apt-get update && apt-get install -y curl unzip
+             echo "Downloading and processing SRTM data..."
+             cd /data
+             # Download and process first file
+             curl -L -o srtm_61_07.zip https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_07.zip
+             unzip srtm_61_07.zip
+             # Download and process second file
+             curl -L -o srtm_61_08.zip https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_08.zip
+             unzip srtm_61_08.zip
+             # Clean up
+             rm *.zip
+             echo "Downloads and extraction completed. Contents of /data:"
+             ls -la /data
+         volumeMounts:
+           - name: data
+             mountPath: /data
+     containers:
+       - name: {{ .Chart.Name }}
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+         imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+         ports:
+           - name: http
+             containerPort: 8080
+             protocol: TCP
+         volumeMounts:
+           - name: data
+             mountPath: {{ .Values.data.mountPath | default "/code/data" }}
+         {{- if .Values.env }}
+         env:
+           {{- range $key, $value := .Values.env }}
+           - name: {{ $key }}
+             value: {{ $value | quote }}
+           {{- end }}
+         {{- end }}
+     volumes:
+       - name: data
+         {{- if .Values.persistence.enabled }}
+         persistentVolumeClaim:
+           claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "open-elevation.fullname" . }}{{- end }}
+         {{- else }}
+         emptyDir: {}
+         {{- end }}

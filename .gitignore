@@ -3,3 +3,5 @@ __pycache__/
 data/
 .idea/
 certs/
+.venv/
+open_elevation.egg-info/

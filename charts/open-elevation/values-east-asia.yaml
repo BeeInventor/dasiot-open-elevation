@@ -1,0 +1,44 @@
+data:
+  mountPath: /code/data
+
+persistence:
+  enabled: true
+  size: 30Gi
+
+dataset:
+  enabled: true
+  # If the PVC already contains any .tif files, the init container skips all downloads.
+  # Set this to false when you intentionally want to re-download or replace the dataset.
+  skipIfDataPresent: true
+  urls:
+    # Hong Kong
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_59_08.zip"
+
+    # Taiwan main island
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_07.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_08.zip"
+
+    # Optional: outlying Taiwan islands such as Kinmen, Matsu, and Penghu
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_60_07.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_60_08.zip"
+
+    # Japan: Okinawa, Kyushu, Shikoku, Honshu, Hokkaido
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_62_07.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_62_06.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_63_06.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_63_05.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_63_04.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_64_06.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_64_05.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_64_04.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_65_07.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_65_05.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_65_04.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_65_03.zip"
+    - "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_66_04.zip"
+  tile:
+    enabled: true
+    xTiles: 10
+    yTiles: 10
+    removeSourceAfterTiling: true
+  cleanupArchives: true

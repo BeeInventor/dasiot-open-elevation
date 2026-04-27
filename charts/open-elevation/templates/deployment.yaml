@@ -14,29 +14,73 @@ spec:
      labels:
        {{- include "open-elevation.selectorLabels" . | nindent 8 }}
    spec:
+     {{- if .Values.dataset.enabled }}
      initContainers:
-       - name: download-srtm
-         image: debian:buster-slim
+       - name: prepare-elevation-data
+         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
          command:
            - sh
            - -c
            - |
-             apt-get update && apt-get install -y curl unzip
-             echo "Downloading and processing SRTM data..."
-             cd /data
-             # Download and process first file
-             curl -L -o srtm_61_07.zip https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_07.zip
-             unzip srtm_61_07.zip
-             # Download and process second file
-             curl -L -o srtm_61_08.zip https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_61_08.zip
-             unzip srtm_61_08.zip
-             # Clean up
-             rm *.zip
-             echo "Downloads and extraction completed. Contents of /data:"
+             set -eu
+             mkdir -p /data /tmp/elevation-src
+             if [ "{{ .Values.dataset.skipIfDataPresent }}" = "true" ] && find /data -maxdepth 1 -name '*.tif' | grep -q .; then
+               echo "GeoTIFF data already exists in /data, skipping download."
+               exit 0
+             fi
+
+             rm -f /tmp/elevation-src/*
+             echo "Downloading elevation datasets..."
+             {{- range $index, $url := .Values.dataset.urls }}
+             file="/tmp/elevation-src/source-{{ $index }}"
+             wget -O "$file" "{{ $url }}"
+             case "{{ $url }}" in
+               *.zip)
+                 unzip -o "$file" -d /tmp/elevation-src
+                 ;;
+               *.rar)
+                 unar -f -o /tmp/elevation-src "$file"
+                 ;;
+               *.tif|*.tiff)
+                 cp "$file" "/tmp/elevation-src/source-{{ $index }}.tif"
+                 ;;
+               *)
+                 echo "Unsupported dataset URL: {{ $url }}"
+                 exit 1
+                 ;;
+             esac
+             {{- end }}
+
+             find /tmp/elevation-src -maxdepth 1 \( -iname '*.tif' -o -iname '*.tiff' \) -print
+
+             {{- if .Values.dataset.tile.enabled }}
+             echo "Tiling GeoTIFF files..."
+             for tif in /tmp/elevation-src/*.tif /tmp/elevation-src/*.tiff; do
+               [ -e "$tif" ] || continue
+               echo "Tiling $(basename "$tif") with {{ .Values.dataset.tile.xTiles }}x{{ .Values.dataset.tile.yTiles }} tiles..."
+               /code/create-tiles.sh "$tif" "{{ .Values.dataset.tile.xTiles }}" "{{ .Values.dataset.tile.yTiles }}"
+               echo "Finished tiling $(basename "$tif")"
+               {{- if .Values.dataset.tile.removeSourceAfterTiling }}
+               rm -f "$tif"
+               {{- end }}
+             done
+             cp -f /tmp/elevation-src/*.tif /data/ 2>/dev/null || true
+             cp -f /tmp/elevation-src/*.tiff /data/ 2>/dev/null || true
+             {{- else }}
+             cp -f /tmp/elevation-src/*.tif /data/ 2>/dev/null || true
+             cp -f /tmp/elevation-src/*.tiff /data/ 2>/dev/null || true
+             {{- end }}
+
+             {{- if .Values.dataset.cleanupArchives }}
+             rm -rf /tmp/elevation-src/*
+             {{- end }}
+
+             echo "Prepared elevation files in /data:"
              ls -la /data
          volumeMounts:
            - name: data
              mountPath: /data
+     {{- end }}
      containers:
        - name: {{ .Chart.Name }}
          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"

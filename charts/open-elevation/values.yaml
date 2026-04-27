@@ -8,6 +8,9 @@ service:
   port: 80
   targetPort: 8080
 
+data:
+  mountPath: /code/data
+
 ingress:
   enabled: true
   className: "nginx"
@@ -24,6 +27,18 @@ persistence:
   storageClass: ""
   accessMode: ReadWriteOnce
   size: 1Gi
+  keepOnUninstall: false
+
+dataset:
+  enabled: true
+  skipIfDataPresent: true
+  urls: []
+  tile:
+    enabled: false
+    xTiles: 10
+    yTiles: 10
+    removeSourceAfterTiling: true
+  cleanupArchives: true
 
 tolerations:
 - key: "layer"

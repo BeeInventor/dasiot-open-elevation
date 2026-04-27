@@ -86,12 +86,15 @@ In order for Open-Elevation to work, you need `GDAL` and `libspatialindex`. For 
 
 The setup for `gdal` depends on the distro and may even change among distro versions, thus being outside the scope of this documentation. Please follow the documentation found in [GDAL's homepage](http://www.gdal.org/).
 
-The following are instructions for Ubuntu/Debian compatible distros, and similar ones might apply to your particular setup. Again, make sure you also install GDAL. Please consider using a `virtualenv` instead of using the default python installation for the following commands.
+The following are instructions for Ubuntu/Debian compatible distros, and similar ones might apply to your particular setup. Again, make sure you also install GDAL. Use Python 3.10 or 3.11 for this project, because the pinned `GDAL==3.3.1` dependency is not compatible with Python 3.14.
 	
 
 ```
 apt-get update -y
-apt-get install -y libspatialindex-dev unrar-free bc
+apt-get install -y python3.11 python3.11-venv gdal-bin libgdal-dev libspatialindex-dev unrar-free bc
+python3.11 -m venv .venv
+. .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
@@ -124,6 +127,7 @@ Note that the server expects all GeoTIFF files to be in a `data` folder (not `ti
 Now that you've got your data, you're ready to run Open-Elevation! Simply run
 
 ```
+. .venv/bin/activate
 python server.py
 ```
 

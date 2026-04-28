@@ -88,6 +88,96 @@ Notes:
 - Python `3.14` is too new for this project's pinned `GDAL==3.3.1` dependency. Use Python `3.10` or `3.11`.
 - If `pip install -r requirements.txt` says `gdal-config` is missing, GDAL is not installed or not on your `PATH`.
 
+## Deploy on EC2 with existing Caddy
+
+This example assumes:
+
+- EC2 host user is `ubuntu`
+- Open-Elevation repo lives at `~/dasiot-open-elevation`
+- Existing Caddy stack lives at `~/dasiot-live-call-server`
+- Open-Elevation should be exposed as `https://open-elevation.core.dasiot.site`
+- Open-Elevation container listens on host port `8080`
+
+### 1. SSH into the EC2 host
+
+```bash
+ssh -i ~/.ssh/livecall-record/livecall-record ubuntu@18.142.47.24
+```
+
+### 2. Pull the latest Open-Elevation code
+
+```bash
+cd ~/dasiot-open-elevation
+git pull
+```
+
+If the repo has not been cloned yet and GitHub SSH access is not configured, use HTTPS instead:
+
+```bash
+git clone https://github.com/BeeInventor/dasiot-open-elevation.git
+cd ~/dasiot-open-elevation
+```
+
+### 3. Start or update Open-Elevation
+
+```bash
+cd ~/dasiot-open-elevation
+docker compose -f docker-compose.ec2.yml up -d --build
+```
+
+Check that the API responds on the host:
+
+```bash
+curl http://127.0.0.1:8080/api/v1/lookup?locations=25.0339,121.5645
+```
+
+### 4. Point Caddy to Open-Elevation
+
+The existing Caddy config is in:
+
+```text
+~/dasiot-live-call-server/caddy/Caddyfile
+```
+
+Example Caddyfile:
+
+```caddy
+livecall.core.dasiot.site {
+  reverse_proxy signal-server:9000
+}
+
+open-elevation.core.dasiot.site {
+  reverse_proxy host.docker.internal:8080
+}
+```
+
+For `host.docker.internal` to work on Linux Docker, add this to the `caddy`
+service in `~/dasiot-live-call-server/docker-compose.yml`:
+
+```yaml
+extra_hosts:
+  - "host.docker.internal:host-gateway"
+```
+
+### 5. Recreate only the Caddy container
+
+```bash
+cd ~/dasiot-live-call-server
+sudo docker compose up -d --force-recreate caddy
+```
+
+### 6. Verify HTTPS
+
+```bash
+curl -i https://open-elevation.core.dasiot.site/api/v1/lookup?locations=25.0339,121.5645
+```
+
+### Notes
+
+- In Route53 hosted zone `dasiot.site`, the record name should be `open-elevation.core`.
+- Do not set the record name to `open-elevation.core.dasiot.site` inside that hosted zone, or it will expand to `open-elevation.core.dasiot.site.dasiot.site`.
+- If `docker compose -f docker-compose.ec2.yml up -d --build` appears to wait on first startup, `prepare-data` is usually still downloading or tiling DEM files.
+- If Caddy returns `502`, check `sudo docker logs --tail 100 caddy`.
 
 ## Host with Helm
 

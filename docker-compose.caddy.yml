@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2.4.6-alpine
+    container_name: caddy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"

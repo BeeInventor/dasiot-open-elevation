@@ -1,17 +1,24 @@
 FROM ubuntu:22.04
 
-RUN apt-get update && apt-get install -y \
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-gdal \
+    python3-rtree \
     gdal-bin \
     libgdal-dev \
     libspatialindex-dev \
     unar \
+    unzip \
     bc \
-    wget
+    wget \
+ && rm -rf /var/lib/apt/lists/*
 
 ADD ./requirements.txt .
-RUN pip install -r requirements.txt
+RUN grep -v -E '^(GDAL|rtree)=' requirements.txt > /tmp/requirements-docker.txt \
+ && python3 -m pip install -r /tmp/requirements-docker.txt
 
 RUN mkdir /code
 ADD . /code/

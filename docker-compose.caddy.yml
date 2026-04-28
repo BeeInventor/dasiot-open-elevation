@@ -12,8 +12,14 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - dasiot-live-call-server_default
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "10"
+
+networks:
+  dasiot-live-call-server_default:
+    external: true

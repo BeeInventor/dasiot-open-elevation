@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  prepare-data:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    volumes:
+      - "./data:/code/data"
+    environment:
+      DATA_DIR: /code/data
+      SKIP_IF_DATA_PRESENT: "true"
+      TILE_ENABLED: "true"
+      X_TILES: "10"
+      Y_TILES: "10"
+      REMOVE_SOURCE_AFTER_TILING: "true"
+      CLEANUP_ARCHIVES: "true"
+    command: sh /code/docker/prepare-elevation-data.sh
+    restart: "no"
+
+  server:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    volumes:
+      - "./data:/code/data"
+      - "./certs:/code/certs"
+    environment:
+      PYTHONUNBUFFERED: "1"
+    command: stdbuf -i0 -o0 -e0 python3 server.py
+    ports:
+      - "8080:8080"
+    depends_on:
+      prepare-data:
+        condition: service_completed_successfully

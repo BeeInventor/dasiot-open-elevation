@@ -7,7 +7,8 @@
   },
   "scripts": {
     "csv-to-json": "node --env-file=../.env scripts/csv-to-json.js",
-    "generate-migration": "node scripts/generate-elevation-migration.js"
+    "generate-migration": "node scripts/generate-elevation-migration.js",
+    "fetch-project-altitude": "node --env-file=../.env scripts/fetch-project-altitude.js"
   },
   "dependencies": {
     "cesium": "^1.125.0"
